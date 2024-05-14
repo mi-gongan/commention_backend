@@ -2,14 +2,15 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func ConnectDB() *mongo.Client {
+var DBClient *mongo.Client
+
+func ConnectDB() {
 
 	uri := os.Getenv("MONGO_URL")
 
@@ -27,7 +28,5 @@ func ConnectDB() *mongo.Client {
 		panic(err)
 	}
 
-	fmt.Println("Connected to MongoDB!")
-
-	return client
+	DBClient = client
 }

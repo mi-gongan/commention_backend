@@ -6,6 +6,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/mi-gongan/commention_backend/pkg/db"
 	"github.com/mi-gongan/commention_backend/pkg/route"
 )
 
@@ -20,6 +21,7 @@ type Claims struct {
 
 func init() {
 	godotenv.Load(".env")
+	db.ConnectDB()
 }
 
 func main() {

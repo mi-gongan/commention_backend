@@ -57,11 +57,9 @@ func SignInHandler(c *gin.Context) {
 		return
 	}
 
-	client := db.ConnectDB()
-
 	var result bson.M = bson.M{}
 
-	err := client.Database("commention").Collection("users").FindOne(c, bson.M{"email": req.Email}).Decode(&result)
+	err := db.DBClient.Database("commention").Collection("users").FindOne(c, bson.M{"email": req.Email}).Decode(&result)
 
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
@@ -99,11 +97,9 @@ func SignUpHandler(c *gin.Context) {
 		panic(err)
 	}
 
-	client := db.ConnectDB()
-
 	var result bson.M = bson.M{}
 
-	err = client.Database("commention").Collection("users").FindOne(c, bson.M{"email": req.Email}).Decode(&result)
+	err = db.DBClient.Database("commention").Collection("users").FindOne(c, bson.M{"email": req.Email}).Decode(&result)
 
 	if err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
@@ -116,14 +112,12 @@ func SignUpHandler(c *gin.Context) {
 		"name":     req.Name,
 	}
 
-	_, err = client.Database("commention").Collection("users").InsertOne(c, row)
+	_, err = db.DBClient.Database("commention").Collection("users").InsertOne(c, row)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	client.Disconnect(c)
 
 	user := model.UserForJWT{
 		Email: req.Email,
