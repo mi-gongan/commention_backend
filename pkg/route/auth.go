@@ -8,6 +8,7 @@ import (
 func RegisterAuthRoutes(baseRouter gin.IRouter, relativeUrl string) {
 	router := baseRouter.Group(relativeUrl)
 	router.GET("/", handler.GetAuthHandler)
-	router.POST("/login", handler.LoginHandler)
+	router.POST("/sign-in", handler.SignInHandler)
+	router.POST("/sign-up", handler.SignUpHandler)
 	router.POST("/refresh", handler.RefreshTokenHandler)
 }

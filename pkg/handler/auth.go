@@ -4,9 +4,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mi-gongan/commention_backend/pkg/db"
 	"github.com/mi-gongan/commention_backend/pkg/dto"
 	"github.com/mi-gongan/commention_backend/pkg/model"
 	"github.com/mi-gongan/commention_backend/pkg/service"
+	"go.mongodb.org/mongo-driver/bson"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func GetAuthHandler(c *gin.Context) {
@@ -24,7 +27,7 @@ func GetAuthHandler(c *gin.Context) {
 	}
 
 	// Return the user information
-	c.JSON(http.StatusOK, gin.H{"user": claims.User})
+	c.JSON(http.StatusOK, gin.H{"user": claims.UserForJWT})
 }
 
 func RefreshTokenHandler(c *gin.Context) {
@@ -43,7 +46,7 @@ func RefreshTokenHandler(c *gin.Context) {
 	}
 
 	// 새로운 JWT 토큰 생성
-	token, err := service.CreateToken(claims.User)
+	token, err := service.CreateToken(claims.UserForJWT)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -53,23 +56,93 @@ func RefreshTokenHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
-func LoginHandler(c *gin.Context) {
+func SignInHandler(c *gin.Context) {
 
 	// 클라이언트로부터 요청 받기
-	var req dto.LoginRequest
+	var req dto.SignInRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	//TODO: Supabase로부터 사용자 정보 가져와서 없으면 return
+	client := db.ConnectDB()
 
-	//TODO: 가져온 데이터에 대해서 비밀번호 검증
+	// 사용자 정보 조회
+	var result bson.M = bson.M{}
+
+	err := client.Database("commention").Collection("users").FindOne(c, bson.M{"email": req.Email}).Decode(&result)
+
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
+	// 비밀번호 검증
+	err = bcrypt.CompareHashAndPassword([]byte(result["password"].(string)), []byte(req.Password))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid password"})
+		return
+	}
 
 	// 사용자 정보 생성
-	user := model.User{
+	user := model.UserForJWT{
 		Email: req.Email,
-		// 다른 사용자 정보 필드도 필요에 따라 여기에 추가
+	}
+
+	// Create JWT token and refresh token
+	token, refreshToken, err := service.CreateTokenWithRefresh(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 생성된 토큰 반환
+	c.JSON(http.StatusOK, gin.H{"token": token, "refresh_token": refreshToken})
+}
+
+func SignUpHandler(c *gin.Context) {
+	// 클라이언트로부터 요청 받기
+	var req dto.SignUpRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		panic(err)
+	}
+
+	client := db.ConnectDB()
+
+	// 이미 존재하는 사용자인지 확인
+	var result bson.M = bson.M{}
+
+	err = client.Database("commention").Collection("users").FindOne(c, bson.M{"email": req.Email}).Decode(&result)
+
+	if err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
+		return
+	}
+
+	var row = bson.M{
+		"email":    req.Email,
+		"password": string(hashedPassword),
+		"name":     req.Name,
+	}
+
+	_, err = client.Database("commention").Collection("users").InsertOne(c, row)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	client.Disconnect(c)
+
+	// 사용자 정보 생성
+	user := model.UserForJWT{
+		Email: req.Email,
 	}
 
 	// Create JWT token and refresh token
