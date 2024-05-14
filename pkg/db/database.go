@@ -16,13 +16,13 @@ func ConnectDB() {
 
 	clientOptions := options.Client().ApplyURI(uri)
 
-	client, err := mongo.Connect(context.TODO(), clientOptions)
+	client, err := mongo.Connect(context.Background(), clientOptions)
 
 	if err != nil {
 		panic(err)
 	}
 
-	err = client.Ping(context.TODO(), nil)
+	err = client.Ping(context.Background(), nil)
 
 	if err != nil {
 		panic(err)
