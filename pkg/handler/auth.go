@@ -19,46 +19,38 @@ func GetAuthHandler(c *gin.Context) {
 		return
 	}
 
-	// Verify the token
 	claims, err := service.VerifyToken(tokenString)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Return the user information
 	c.JSON(http.StatusOK, gin.H{"user": claims.UserForJWT})
 }
 
 func RefreshTokenHandler(c *gin.Context) {
-	// 클라이언트로부터 요청 받기
 	var req dto.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 리프레시 토큰 검증
 	claims, err := service.VerifyRefreshToken(req.RefreshToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 새로운 JWT 토큰 생성
 	token, err := service.CreateToken(claims.UserForJWT)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 생성된 새로운 토큰 반환
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
 func SignInHandler(c *gin.Context) {
-
-	// 클라이언트로부터 요청 받기
 	var req dto.SignInRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -67,7 +59,6 @@ func SignInHandler(c *gin.Context) {
 
 	client := db.ConnectDB()
 
-	// 사용자 정보 조회
 	var result bson.M = bson.M{}
 
 	err := client.Database("commention").Collection("users").FindOne(c, bson.M{"email": req.Email}).Decode(&result)
@@ -77,31 +68,26 @@ func SignInHandler(c *gin.Context) {
 		return
 	}
 
-	// 비밀번호 검증
 	err = bcrypt.CompareHashAndPassword([]byte(result["password"].(string)), []byte(req.Password))
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid password"})
 		return
 	}
 
-	// 사용자 정보 생성
 	user := model.UserForJWT{
 		Email: req.Email,
 	}
 
-	// Create JWT token and refresh token
 	token, refreshToken, err := service.CreateTokenWithRefresh(user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 생성된 토큰 반환
 	c.JSON(http.StatusOK, gin.H{"token": token, "refresh_token": refreshToken})
 }
 
 func SignUpHandler(c *gin.Context) {
-	// 클라이언트로부터 요청 받기
 	var req dto.SignUpRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -115,7 +101,6 @@ func SignUpHandler(c *gin.Context) {
 
 	client := db.ConnectDB()
 
-	// 이미 존재하는 사용자인지 확인
 	var result bson.M = bson.M{}
 
 	err = client.Database("commention").Collection("users").FindOne(c, bson.M{"email": req.Email}).Decode(&result)
@@ -140,18 +125,15 @@ func SignUpHandler(c *gin.Context) {
 
 	client.Disconnect(c)
 
-	// 사용자 정보 생성
 	user := model.UserForJWT{
 		Email: req.Email,
 	}
 
-	// Create JWT token and refresh token
 	token, refreshToken, err := service.CreateTokenWithRefresh(user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 생성된 토큰 반환
 	c.JSON(http.StatusOK, gin.H{"token": token, "refresh_token": refreshToken})
 }
