@@ -3,21 +3,11 @@ package main
 import (
 	"net/http"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/mi-gongan/commention_backend/pkg/db"
 	"github.com/mi-gongan/commention_backend/pkg/route"
 )
-
-type User struct {
-	Email string `json:"email"`
-}
-
-type Claims struct {
-	User `json:"user"`
-	jwt.StandardClaims
-}
 
 func init() {
 	godotenv.Load(".env")
