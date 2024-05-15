@@ -10,7 +10,7 @@ import (
 )
 
 func CreateToken(user model.UserForJWT) (string, error) {
-	expirationTime := time.Now().Add(5 * time.Minute)
+	expirationTime := time.Now().Add(24 * 60 * time.Minute)
 
 	claims := &model.Claims{
 		UserForJWT: user,

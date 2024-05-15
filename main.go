@@ -22,6 +22,7 @@ func main() {
 	})
 
 	route.RegisterAuthRoutes(r, "/auth")
+	route.RegisterCommentRoutes(r, "/comments")
 
 	r.Run(":8080")
 }
