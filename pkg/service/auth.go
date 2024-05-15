@@ -74,12 +74,3 @@ func VerifyRefreshToken(refreshTokenString string) (*model.Claims, error) {
 
 	return nil, fmt.Errorf("invalid token")
 }
-
-func GetUserByEmail(email string) (*model.UserForJWT, error) {
-
-	return nil, nil
-}
-
-func VerifyPassword(email, password string) bool {
-	return true
-}
