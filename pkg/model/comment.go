@@ -1,10 +1,10 @@
 package model
 
 type Comment struct {
-	ID          string `bson:"_id"`
-	OwnerEmail  string `bson:"owner_email"`
-	FromEmail   string `bson:"from_email"`
-	Cotent      string `bson:"content"`
-	IsDisplayed bool   `bson:"is_displayed"`
-	Order       int    `bson:"order"`
+	ID          string `bson:"_id" json:"id"`
+	OwnerEmail  string `bson:"owner_email" json:"ownerEmail"`
+	FromEmail   string `bson:"from_email" json:"fromEmail"`
+	Cotent      string `bson:"content" json:"content"`
+	IsDisplayed bool   `bson:"is_displayed" json:"isDisplayed"`
+	Order       int    `bson:"order" json:"order"`
 }
