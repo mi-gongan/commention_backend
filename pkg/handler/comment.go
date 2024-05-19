@@ -73,7 +73,7 @@ func CreateComment(c *gin.Context) {
 		ID:          uuid.New().String(),
 		FromEmail:   claims.UserForJWT.Email,
 		OwnerEmail:  req.ToEmail,
-		Cotent:      req.Content,
+		Content:     req.Content,
 		IsDisplayed: false,
 		Order:       finalOrder,
 	}
